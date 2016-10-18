@@ -53,8 +53,6 @@ public class PickingTime extends AppCompatActivity {
                         r.commitTransaction();
                         // トランザクション終了
 
-                        /*
-*/
                         r.close();
                         finish();
                         // 設定 ボタンクリック時の処理

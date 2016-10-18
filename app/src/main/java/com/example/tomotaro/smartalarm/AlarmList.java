@@ -17,7 +17,6 @@ public class AlarmList extends RealmObject  {
     private int hour;
     private int minute;
     private boolean on;
-    private static boolean casting = false;
     private boolean firstAlarm = true;
     private String detail;
     @PrimaryKey
@@ -26,14 +25,6 @@ public class AlarmList extends RealmObject  {
 
     public String getDetail() {
         return detail;
-    }
-
-    public static boolean isCasting() {
-        return casting;
-    }
-
-    public static void setCasting(boolean casting) {
-        AlarmList.casting = casting;
     }
 
     public void setDetail(String detail) {this.detail = detail;}
@@ -74,7 +65,6 @@ public class AlarmList extends RealmObject  {
         this.minute = minute;
     }
 
-
     public void setAlarm(int hour, int minute, Context context){
         Calendar calendar2 = Calendar.getInstance();
         calendar2.setTimeInMillis(System.currentTimeMillis());
@@ -91,33 +81,33 @@ public class AlarmList extends RealmObject  {
         Toast.makeText(context, String.format("%02d時%02d分にアラームがなります.", hour, minute), Toast.LENGTH_LONG).show();
         Intent intent1 = new Intent(context, AlarmBroadcastReceiver.class);
         intent1.putExtra("first",this.isFirstAlarm());
-  //      intent1.putExtra("id", this.getId());
+        intent1.putExtra("id",this.getId());
+        Toast.makeText(context,String.valueOf(intent1.getLongExtra("id",-1)),Toast.LENGTH_SHORT).show();
+
         PendingIntent pending = PendingIntent.getBroadcast(context, 0, intent1, 0);
         // アラームをセットする
         AlarmManager am = (AlarmManager)context.getSystemService(ALARM_SERVICE);
         am.setExact(AlarmManager.RTC_WAKEUP, calendar2.getTimeInMillis(), pending);
-       // Toast.makeText(context, String.format("%02d:%02dにアラームを設定しました。",hour,minute), Toast.LENGTH_LONG).show();
+        //Toast.makeText(context, String.format("%02d:%02dにアラームを設定しました。",hour,minute), Toast.LENGTH_LONG).show();
 
+ /*       setCasting(true);
+        RealmConfiguration realmConfig = new RealmConfiguration.Builder(context)
+                .deleteRealmIfMigrationNeeded()
+                .build();
+        Realm.setDefaultConfiguration(realmConfig);
+        Realm r = Realm.getDefaultInstance();
+        AlarmList alarmList = r.where(AlarmList.class).equalTo("id",id).findFirst();
 
-        //RealmConfiguration realmConfig = new RealmConfiguration.Builder(context)
-             //   .deleteRealmIfMigrationNeeded()
-               // .build();
-        //Realm.setDefaultConfiguration(realmConfig);
-        //Realm r = Realm.getDefaultInstance();
-        //  AlarmList alarmList = r.where(AlarmList.class).equalTo("id",id).findFirst();
-
-        //alarmListのフィールドを参照しようとすると終了する
-
-       // setCasting(true);
-        //r.beginTransaction();
-        //if (this.isFirstAlarm()) {
-         //   Toast.makeText(context, "このアラームはsecondになる", Toast.LENGTH_SHORT).show();
-        //    this.setFirstAlarm(false);
-        //} else {
-       //     Toast.makeText(context, "このアラームはfirstになる", Toast.LENGTH_SHORT).show();
-        //    this.setFirstAlarm(true);
-        //}
-        //r.commitTransaction();
-        //r.close();
+        r.beginTransaction();
+        if (this.isFirstAlarm()) {
+            Toast.makeText(context, "このアラームはsecondになる", Toast.LENGTH_SHORT).show();
+            this.setFirstAlarm(false);
+        } else {
+            Toast.makeText(context, "このアラームはfirstになる", Toast.LENGTH_SHORT).show();
+            this.setFirstAlarm(true);
+        }
+        r.commitTransaction();
+        r.close();
+        setCasting(false);*/
     }
 }

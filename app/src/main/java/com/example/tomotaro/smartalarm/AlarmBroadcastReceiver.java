@@ -18,6 +18,11 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Calendar;
+
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+
 
 public class AlarmBroadcastReceiver extends BroadcastReceiver {
     Context context;
@@ -38,7 +43,6 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
                 new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
-
                         Toast.makeText(context, "onResponse", Toast.LENGTH_SHORT).show();
                         try {
                             currentWeather = response.getJSONArray("forecasts").getJSONObject(0).getString("telop");
@@ -48,23 +52,50 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
                         }
 
                         Toast.makeText(context, currentWeather, Toast.LENGTH_SHORT).show();
-                            //firstかどうか　雨かどうか
-                        Boolean first = intent.getBooleanExtra("first",false);
-                        Boolean cast;
-                        Intent intent1;
+                        long alarmId = intent.getLongExtra("id",-1);
+                        Toast.makeText(context, String.valueOf(alarmId), Toast.LENGTH_SHORT).show();
 
-                        currentWeather = "雨";
+                        RealmConfiguration realmConfig = new RealmConfiguration.Builder(context)
+                                .deleteRealmIfMigrationNeeded()
+                                .build();
+                        Realm.setDefaultConfiguration(realmConfig);
+                        Realm r = Realm.getDefaultInstance();
+                        Calendar calendar = Calendar.getInstance();
+                        int hour   = calendar.get(Calendar.HOUR_OF_DAY);
+                        int minute = calendar.get(Calendar.MINUTE);
+          //              AlarmList alarmList = r.where(AlarmList.class).greaterThan("hour",hour-1).greaterThan("minute",minute).findFirst();
+                        AlarmList alarmList = r.where(AlarmList.class).equalTo("id",alarmId).findFirst();
+                        //currentWeather = "雨";             //テストをするために雨にしている
 
-                        if(currentWeather.matches(".*雨.*")) {
-                            Toast.makeText(context, "雨", Toast.LENGTH_SHORT).show();
-                            cast = true;
-                        }else {
-                            Toast.makeText(context, "雨じゃない", Toast.LENGTH_SHORT).show();
-                            cast = false;
+                        Boolean cast = true;
+                        r.beginTransaction();
+                        //ここにsetFirstAlarmを書くとなぜかとおる
+                        if (alarmList.isFirstAlarm()) {
+                            Toast.makeText(context,"このアラームはsecondになる", Toast.LENGTH_SHORT).show();
+                            //alarmList.setFirstAlarm(false);
+                            if(currentWeather.matches(".*雨.*")) {
+                                Toast.makeText(context, "雨", Toast.LENGTH_SHORT).show();
+                                cast = true;
+                            }else {
+                                Toast.makeText(context, "雨じゃない", Toast.LENGTH_SHORT).show();
+                                cast = false;
+                            }
+                        } else {
+                            Toast.makeText(context, "このアラームはfirstになる", Toast.LENGTH_SHORT).show();
+                            //alarmList.setFirstAlarm(true);
                         }
 
+                        //ここに書くと落ちる
+                        Toast.makeText(context,String.valueOf(!alarmList.isFirstAlarm()), Toast.LENGTH_SHORT).show();
+                        alarmList.setFirstAlarm(!alarmList.isFirstAlarm());
+                        r.commitTransaction();
+                        r.close();
+  //
 
-                        if(cast){
+                        Intent intent1; //intent1は次のアクティビティへの画面遷移
+                        //intent2はNotificationManagerに入れる
+
+                        if(cast == true){
                             Intent intent2 = new Intent(context, StopAlarm.class);
                             PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent2, PendingIntent.FLAG_UPDATE_CURRENT);
                             NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -84,6 +115,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
                             // 通知
                             notificationManager.notify(R.string.app_name, notification);
                             intent1 = new Intent(context, StopAlarm.class);
+                            intent1.putExtra("id",alarmId); //StopAlarmへidを渡す
                             intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         }else{
                             intent1 = new Intent(context, MainActivity.class);
@@ -92,32 +124,7 @@ public class AlarmBroadcastReceiver extends BroadcastReceiver {
                         }
                         context.startActivity(intent1);
 
-                        //アラームのfirst切り替え
-  /*                      long id = intent.getLongExtra("id",-1);
-                        Calendar calendar = Calendar.getInstance();
-                        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-                        int minute = calendar.get(Calendar.MINUTE);
-                        RealmConfiguration realmConfig = new RealmConfiguration.Builder(context)
-                                .deleteRealmIfMigrationNeeded()
-                                .build();
-                        Realm.setDefaultConfiguration(realmConfig);
-                        Realm r = Realm.getDefaultInstance();
-                      //  AlarmList alarmList = r.where(AlarmList.class).equalTo("id",id).findFirst();
 
-                        //alarmListのフィールドを参照しようとすると終了する
-
-                   //     Toast.makeText(context, String.format("%02d:%02d",alarmList.getHour(),alarmList.getMinute()), Toast.LENGTH_SHORT).show();
-                        r.beginTransaction();
-                    //    if (alarmList.isFirstAlarm()) {
-                           Toast.makeText(context, "このアラームはsecondになる", Toast.LENGTH_SHORT).show();
-                            //alarmList.setFirstAlarm(false);
-                    //    } else {
-                            Toast.makeText(context, "このアラームはfirstになる", Toast.LENGTH_SHORT).show();
-                            //alarmList.setFirstAlarm(true);
-                    //    }
-                        r.commitTransaction();
-                        r.close();
-*/
 
                     }
                 },

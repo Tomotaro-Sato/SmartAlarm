@@ -86,9 +86,9 @@ public class MainActivity extends AppCompatActivity {
                 int dif = 0;
 
                 AlarmList next = alarmLists.where().equalTo("on", true).greaterThan("hour", hour - 1).greaterThan("minute", minute).findFirst();
-             //   if (next.isCasting() != true){
+
                     if (next == null) {
-                        Toast.makeText(getApplicationContext(), "next == null", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(), "今日のアラームはすべてoffです", Toast.LENGTH_SHORT).show();
                         next = alarmLists.where().equalTo("on", true).findFirst();
                     }//next確定
 
@@ -99,16 +99,21 @@ public class MainActivity extends AppCompatActivity {
                         } else {
                             Toast.makeText(getApplicationContext(), "firstではありません", Toast.LENGTH_SHORT).show();
                         }
-                        Toast.makeText(getApplicationContext(), String.valueOf(next.getHour()) + String.valueOf(next.getMinute() - dif), Toast.LENGTH_SHORT).show();
                         next.setAlarm(next.getHour(), next.getMinute() - dif, getApplicationContext());
 
                     } else { //nextが見つからない場合
                         Toast.makeText(getApplicationContext(), "アラームはすべてoffです", Toast.LENGTH_SHORT).show();
                     }
-               // }
+                }
                 // クエリの結果は自動的に更新されます
-            }
+
         });
+    }
+
+    private void onResume(Bundle bundle){
+        //AlarmList.setCasting(false);
+        Toast.makeText(getApplicationContext(),"casting is ",Toast.LENGTH_SHORT).show();
+        super.onResume();
     }
 
     private void close(){

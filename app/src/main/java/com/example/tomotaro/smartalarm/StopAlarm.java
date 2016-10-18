@@ -18,6 +18,9 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+
 public class StopAlarm extends AppCompatActivity {
     SoundPool mSoundPool;
     int mSoundResId;
@@ -73,6 +76,23 @@ public class StopAlarm extends AppCompatActivity {
 
                             Log.d("Weather", response.toString(2));
 
+                            long alarmId = getIntent().getLongExtra("id",-1);
+                            Toast.makeText(getApplicationContext(),String.valueOf(alarmId),Toast.LENGTH_SHORT).show();
+
+                            RealmConfiguration realmConfig = new RealmConfiguration.Builder(getApplicationContext())
+                                    .deleteRealmIfMigrationNeeded()
+                                    .build();
+                            Realm.setDefaultConfiguration(realmConfig);
+                            Realm r = Realm.getDefaultInstance();
+                            AlarmList alarmList = r.where(AlarmList.class).equalTo("id",alarmId).findFirst();
+
+                            r.beginTransaction();
+                            alarmList.setOn(false);
+                            Toast.makeText(getApplicationContext(),String.valueOf(alarmList.isOn()),Toast.LENGTH_SHORT).show();
+                            r.commitTransaction();
+                            r.close();
+                            Toast.makeText(getApplicationContext(), "次のアラームを設定します。", Toast.LENGTH_SHORT).show();
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -99,12 +119,7 @@ public class StopAlarm extends AppCompatActivity {
 
     public void onClickStop(View view) {
         mSoundPool.release();
-        Toast.makeText(getApplicationContext(), "ALARMを解除しました。", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
-
-        Toast.makeText(getApplicationContext(), "次のアラームを設定します。", Toast.LENGTH_SHORT).show();
-
-
     }
 }
